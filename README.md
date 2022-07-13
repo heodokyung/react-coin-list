@@ -3,6 +3,9 @@
 ## 사이트 설명
 React와 Typescript를 적용하여 만든 Coin 암호화폐 정보 사이트 입니다
 
+## 사이트 바로가기
+[토이프로젝트:암호화폐 코인시세 및 정보 사이트](https://heodokyung.github.io/react-coin-list/).
+
 ## 적용기술
 1.React-query: React-query를 적용하여 Coin 리스트 및 코인 상세정보를 조회합니다.  
 2.TypeScript: 보다 정적인 코드(에러 방지)를 위해 Typescript를 적용하였습니다.  
