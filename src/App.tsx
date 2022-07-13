@@ -1,10 +1,10 @@
-import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
+import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import Router from './Router';
 import reset from 'styled-reset';
 import { lightTheme, darkTheme } from './theme';
-import { useState } from 'react';
-import { BsFillSunFill, BsFillMoonFill } from 'react-icons/bs';
+import { useRecoilValue } from 'recoil';
+import { isDarkAtom } from './atoms';
 
 const GlobalStyle = createGlobalStyle`
   ${reset}
@@ -24,42 +24,22 @@ const GlobalStyle = createGlobalStyle`
   a {
     text-decoration: none;
     color:inherit;
+    background-color: inherit;
   }
 `;
 
-const ThemeButton = styled.button`
-  position: fixed;
-  top: 10px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  padding: 10px;
-  color: ${(prop) => prop.theme.textColor};
-  border: 1px solid ${(prop) => prop.theme.textColor};
-  border-radius: 8px;
-`;
-
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+	// 다크 모드 관리
+	const isDarkMode = useRecoilValue(isDarkAtom);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-    console.log(isDarkMode);
-  };
-
-  return (
-    <>
-      <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
-        <ThemeButton type="button" onClick={() => toggleDarkMode()}>
-          {isDarkMode ? <BsFillSunFill /> : <BsFillMoonFill />}
-        </ThemeButton>
-        <GlobalStyle />
-        <Router />
-        <ReactQueryDevtools initialIsOpen={true} />
-      </ThemeProvider>
-    </>
-  );
+	return (
+		<>
+			<ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+				<GlobalStyle />
+				<Router />
+				<ReactQueryDevtools initialIsOpen={true} />
+			</ThemeProvider>
+		</>
+	);
 }
 export default App;

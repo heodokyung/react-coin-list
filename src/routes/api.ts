@@ -1,34 +1,36 @@
+import axios from 'axios';
+
+// 코인 API
 const BASE_URL = 'https://api.coinpaprika.com/v1';
 
-export function fetchCoins() {
-  // 아래의 3줄 코드를 밑에 한줄 코드로 변경
-  // const response = await fetch('https://api.coinpaprika.com/v1/coins');
-  // const json = await response.json();
-  // return json;
+// 차트 API (아래 예시 참조)
+// https://ohlcv-api.nomadcoders.workers.dev?coinId=btc-bitcoin
+const PRICE_URL = 'https://ohlcv-api.nomadcoders.workers.dev';
 
-  return fetch(`${BASE_URL}/coins`).then((response) => response.json());
-}
+// 기본 Main 코인 리스트
+export const fetchCoins = async () => {
+	return await axios
+		.get(`${BASE_URL}/coins/`)
+		.then((response) => response.data);
+};
 
 // 코인 정보
-export function fetchCoinsInfo(coinId: string) {
-  return fetch(`${BASE_URL}/coins/${coinId}`).then((response) =>
-    response.json()
-  );
-}
+export const fetchCoinsInfo = async (coinId: string) => {
+	return await axios
+		.get(`${BASE_URL}/coins/${coinId}`)
+		.then((response) => response.data);
+};
 
 // 가격 정보
-export function fetchCoinsTickers(coinId: string) {
-  return fetch(`${BASE_URL}/tickers/${coinId}`).then((response) =>
-    response.json()
-  );
-}
+export const fetchCoinsTickers = async (coinId: string) => {
+	return await axios
+		.get(`${BASE_URL}/tickers/${coinId}`)
+		.then((response) => response.data);
+};
 
-// Chart, price
-export function fetchCoinsChart(coinId: string, DateLimit: number = 2) {
-  const endDate = Math.floor(Date.now() / 1000);
-  // 2주의 데이터를 가져옴 (60 * 60 * 24 * 7) => 일주일
-  const startDate = endDate - 60 * 60 * 24 * 7 * DateLimit;
-  return fetch(
-    `${BASE_URL}/coins/${coinId}/ohlcv/historical?start=${startDate}&end=${endDate}`
-  ).then((response) => response.json());
-}
+// 차트
+export const fetchCoinsChart = async (coinId: string) => {
+	return await axios
+		.get(`${PRICE_URL}/?coinId=${coinId}`)
+		.then((response) => response.data);
+};
