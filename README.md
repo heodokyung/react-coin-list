@@ -1,7 +1,7 @@
 # React - React-Coin-list
 
 ## 사이트 설명
-React와 Typescript를 적용하여 만든 Coin 암호화폐 정보 사이트 입니다
+React와 Typescript를 이용하여 Coin 암호화폐에 대한 순위, 가격 및 차트 정보를 보여주는 토이 프로젝트입니다
 
 ## 사이트 바로가기
 <a href="https://heodokyung.github.io/react-coin-list/" target="_blank">[토이프로젝트]암호화폐 코인시세 및 정보 사이트 만들기</a>
