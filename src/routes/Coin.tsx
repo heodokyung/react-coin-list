@@ -1,293 +1,309 @@
 import Helmet from 'react-helmet';
-import {
-	Link,
-	Route,
-	Switch,
-	useHistory,
-	useLocation,
-	useParams,
-	useRouteMatch,
-} from 'react-router-dom';
+import { Link, Route, Switch, useHistory, useLocation, useParams, useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components';
 import Price from './Price';
 import Chart from './Chart';
 import { useQuery } from 'react-query';
-import { fetchCoinsInfo, fetchCoinsTickers } from './api';
-import { I_PriceData } from '../atoms';
+import { CoinDetail, createFallbackDetail, fetchCoinsInfo } from './api';
+import CoinIcon from '../components/CoinIcon';
 
 const commonBox = styled.div`
 	background: ${(props) => props.theme.listColor};
-	color: 1px solid ${(props) => props.theme.textColor};
-	border-radius: 6px;
-	border: 1px solid #ddd;
+	border-radius: 18px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	box-shadow: ${(props) => props.theme.shadow};
 `;
 
 const Container = styled.div`
-	padding: 0 20px;
-	max-width: 480px;
+	width: min(100%, 900px);
 	margin: 0 auto;
+	padding: 32px 20px 56px;
+`;
+
+const Header = styled.header`
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 18px;
+	padding: 22px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	border-radius: 22px;
+	background: ${(props) => props.theme.panelColor};
+	box-shadow: ${(props) => props.theme.shadow};
+`;
+
+const CoinTitleGroup = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-width: 0;
 `;
 
 const Title = styled.h1`
-	position: relative;
-	display: block;
-	font-size: 36px;
-	font-weight: bold;
-	width: 100%;
-	text-align: center;
+	font-size: clamp(26px, 5vw, 42px);
+	font-weight: 800;
+	letter-spacing: -0.04em;
+`;
 
-	color: ${(props) => props.theme.accentColor};
-	a {
-		display: flex;
-		position: absolute;
-		left: 0;
-	}
+const SymbolText = styled.p`
+	margin-top: 4px;
+	color: ${(props) => props.theme.mutedTextColor};
+	font-size: 13px;
+	font-weight: 800;
+	text-transform: uppercase;
+`;
+
+const BackLink = styled(Link)`
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 72px;
+	height: 42px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	border-radius: 12px;
+	background: ${(props) => props.theme.listColor};
+	color: ${(props) => props.theme.textColor};
+	font-size: 14px;
+	font-weight: 800;
 `;
 
 const Loader = styled.p`
+	padding: 24px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	border-radius: 16px;
+	background: ${(props) => props.theme.listColor};
+	color: ${(props) => props.theme.mutedTextColor};
 	text-align: center;
-	font-size: 20px;
-	font-weight: bold;
-	margin-top: 20px;
+	font-weight: 800;
+`;
+
+const Notice = styled(Loader)`
+	margin-bottom: 16px;
+	text-align: left;
 `;
 
 const Overview = styled(commonBox)`
-	display: flex;
-	justify-content: space-between;
-	margin-top: 15px;
-	padding: 10px 20px;
-`;
-const OverviewItem = styled.div`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	span {
-		font-size: 18px;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1px;
+	overflow: hidden;
+
+	@media (max-width: 760px) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
+`;
+
+const OverviewItem = styled.div`
+	padding: 18px;
+	background: ${(props) => props.theme.listColor};
+
+	span {
+		display: block;
+	}
+
 	span:first-child {
-		font-size: 12px;
-		font-weight: bold;
-		text-transform: uppercase;
 		margin-bottom: 8px;
+		color: ${(props) => props.theme.mutedTextColor};
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+	}
+
+	span:last-child {
+		font-size: 18px;
+		font-weight: 800;
+		letter-spacing: -0.02em;
 	}
 `;
 
 const Description = styled(commonBox)`
-	margin: 20px 0px;
-	background-color: ${(props) => props.theme.listColor};
-	padding: 20px;
-	line-height: 20px;
+	margin: 18px 0;
+	padding: 22px;
+	color: ${(props) => props.theme.mutedTextColor};
+	font-size: 15px;
+	line-height: 1.75;
 `;
 
 const Split = styled.div`
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
-	margin: 25px 0px;
+	margin: 18px 0;
 	gap: 10px;
 `;
 
 const Tab = styled.span<{ isActive: boolean }>`
 	text-align: center;
-	text-transform: uppercase;
-	font-size: 12px;
-	font-weight: 400;
-	padding: 16px 0px;
-	border-radius: 10px;
 	font-size: 14px;
-	border: 1px solid #ddd;
-	color: ${(props) =>
-		props.isActive ? props.theme.bgColor : props.theme.textColor};
-	background-color: ${(props) =>
-		props.isActive ? props.theme.accentColor : props.theme.listColor};
+	font-weight: 800;
+	border-radius: 14px;
+	border: 1px solid ${(props) => (props.isActive ? props.theme.accentColor : props.theme.borderColor)};
+	color: ${(props) => (props.isActive ? props.theme.accentTextColor : props.theme.textColor)};
+	background-color: ${(props) => (props.isActive ? props.theme.accentColor : props.theme.listColor)};
+
 	a {
 		display: block;
+		padding: 15px 0;
 	}
 `;
 
 const BtnWrap = styled(Split)`
-	padding-top: 20px;
-	margin-top: 50px;
-	border-top: 2px solid ${(props) => props.theme.textColor};
+	padding-top: 18px;
+	margin-top: 22px;
+	border-top: 1px solid ${(props) => props.theme.borderColor};
 `;
 
-const LinkHome = styled(Link)`
-	display: inline-block;
-	border: 1px solid #ddd;
-	padding: 0 20px;
-	border-radius: 4px;
-	background: ${(props) => props.theme.listColor};
-	color: #222;
-	font-size: 16px;
-	font-weight: bold;
-	text-align: center;
-	box-sizing: border-box;
-	height: 48px;
-	line-height: 46px;
-`;
-
-const Header = styled.header`
-	height: 10vh;
-	display: flex;
+const ActionButton = styled.button`
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border-bottom: 1px solid ${(props) => props.theme.textColor};
+	height: 48px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	border-radius: 14px;
+	background: ${(props) => props.theme.listColor};
+	color: ${(props) => props.theme.textColor};
+	font-size: 15px;
+	font-weight: 800;
 `;
 
-interface I_Params {
+const ActionLink = styled(Link)`
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 48px;
+	border: 1px solid ${(props) => props.theme.borderColor};
+	border-radius: 14px;
+	background: ${(props) => props.theme.listColor};
+	color: ${(props) => props.theme.textColor};
+	font-size: 15px;
+	font-weight: 800;
+`;
+
+interface Params {
 	coinId: string;
 }
 
-interface I_State {
-	name: string;
-	pathname: string;
+interface LocationState {
+	name?: string;
 }
 
-interface I_InfoData {
-	id: string;
-	name: string;
-	symbol: string;
-	rank: number;
-	is_new: boolean;
-	is_active: boolean;
-	type: string;
-	description: string;
-	message: string;
-	open_source: boolean;
-	started_at: string;
-	development_status: string;
-	hardware_wallet: boolean;
-	proof_type: string;
-	org_structure: string;
-	hash_algorithm: string;
-	first_data_at: string;
-	last_data_at: string;
-}
+const formatCurrency = (value?: number) => {
+	if (typeof value !== 'number' || Number.isNaN(value)) return '-';
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		maximumFractionDigits: value >= 100 ? 0 : 4,
+	}).format(value);
+};
+
+const formatCompact = (value?: number | null) => {
+	if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return '-';
+	return new Intl.NumberFormat('en-US', {
+		notation: 'compact',
+		maximumFractionDigits: 2,
+	}).format(value);
+};
+
+const cleanDescription = (description?: string) => {
+	if (!description) return '이 코인에 대한 설명 정보가 없습니다.';
+	return description.replace(/<[^>]*>?/gm, '').slice(0, 520) || '이 코인에 대한 설명 정보가 없습니다.';
+};
 
 function Coin() {
-	const numberCommas = (x: any) => {
-		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	};
+	const history = useHistory();
+	const { coinId } = useParams<Params>();
+	const { state } = useLocation<LocationState>();
+	const chartMatch = useRouteMatch('/:coinId/chart');
+	const priceMatch = useRouteMatch('/:coinId/price');
 
-	let history = useHistory();
-
-	const { coinId } = useParams<I_Params>();
-	const { state } = useLocation<I_State>();
-
-	// react-router 6버전에서는 useRouteMatch()가 사라지고 useMatch()를 이용해야 함
-	// 6버전에서는 Switch 가 Routes 로 변경됐고 대신 Outlet을 사용하면 nested router를 쉽게 이용
-	// https://reactrouter.com/docs/en/v6/getting-started/overview
-	// https://ui.dev/react-router-nested-routes
-
-	const chartMatch = useRouteMatch(process.env.PUBLIC_URL + '/:coinId/chart');
-	const priceMatch = useRouteMatch(process.env.PUBLIC_URL + `/:coinId/price`);
-
-	// Query Select 처리로 주석 처리
-	/*
-  const [loading, setLoading] = useState(true);
-  const [info, setInfo] = useState<I_InfoData>();
-  const [price, setPrice] = useState<I_PriceData>();
-  useEffect(() => {
-    (async () => {
-      const infoData = await (
-        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
-      ).json();
-
-      const priceData = await (
-        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
-      ).json();
-
-      setInfo(infoData);
-      setPrice(priceData);
-      setLoading(false);
-    })();
-  }, [coinId]);
-  */
-
-	const { isLoading: infoLoading, data: infoData } = useQuery<I_InfoData>(
+	const { isLoading, isError, data } = useQuery<CoinDetail>(
 		['info', coinId],
 		() => fetchCoinsInfo(coinId),
-	);
-
-	const { isLoading: priceLoading, data: priceData } = useQuery<I_PriceData>(
-		['price', coinId],
-		() => fetchCoinsTickers(coinId),
 		{
-			refetchInterval: 3000,
+			staleTime: 1000 * 60 * 5,
+			retry: 1,
 		},
 	);
 
-	const loading = infoLoading || priceLoading;
+	const coinData = data || createFallbackDetail(coinId);
+	const currentPrice = coinData.market_data?.current_price?.usd;
+	const marketCap = coinData.market_data?.market_cap?.usd;
+	const volume = coinData.market_data?.total_volume?.usd;
+	const image = coinData.image?.large || coinData.image?.small || coinData.image?.thumb;
+	const title = state?.name || coinData.name || 'Coin';
+
 	return (
 		<Container>
 			<Helmet>
-				<title>{state?.name ? state.name : 'Coin List'}</title>
+				<title>{title}</title>
 			</Helmet>
 			<Header>
-				<Title>
-					<Link to={process.env.PUBLIC_URL + `/`}>&larr;</Link>
-					{state?.name ? state.name : loading ? 'Loading...' : infoData?.name}
-				</Title>
+				<CoinTitleGroup>
+					<CoinIcon image={image} symbol={coinData.symbol} name={title} size={52} />
+					<div>
+						<Title>{isLoading && !data ? 'Loading...' : title}</Title>
+						<SymbolText>{coinData.symbol}</SymbolText>
+					</div>
+				</CoinTitleGroup>
+				<BackLink to='/'>목록</BackLink>
 			</Header>
 
-			{loading ? (
-				<Loader>Loading....</Loader>
+			{isLoading && !data ? (
+				<Loader>코인 정보를 불러오는 중입니다.</Loader>
 			) : (
 				<>
+					{isError && (
+						<Notice>실시간 상세 API 연결에 실패해 샘플 데이터를 표시합니다.</Notice>
+					)}
 					<Overview>
 						<OverviewItem>
-							<span>Rank:</span>
-							<span>{infoData?.rank}</span>
+							<span>Rank</span>
+							<span>#{coinData.market_cap_rank || '-'}</span>
 						</OverviewItem>
 						<OverviewItem>
-							<span>Price:(USD)</span>
-							<span>${priceData?.quotes.USD.price.toFixed(2)}</span>
+							<span>Price</span>
+							<span>{formatCurrency(currentPrice)}</span>
+						</OverviewItem>
+						<OverviewItem>
+							<span>Market Cap</span>
+							<span>{formatCompact(marketCap)}</span>
+						</OverviewItem>
+						<OverviewItem>
+							<span>24H Volume</span>
+							<span>{formatCompact(volume)}</span>
 						</OverviewItem>
 					</Overview>
-					<Description as='p'>{infoData?.description}</Description>
-					<Overview>
-						<OverviewItem>
-							<span>Total Suply:</span>
-							<span>{numberCommas(priceData?.total_supply)}</span>
-						</OverviewItem>
-						<OverviewItem>
-							<span>Max Supply:</span>
-							<span>{numberCommas(priceData?.max_supply)}</span>
-						</OverviewItem>
-					</Overview>
+					<Description as='p'>{cleanDescription(coinData.description?.en)}</Description>
 
 					<Split>
 						<Tab isActive={chartMatch !== null}>
-							<Link to={process.env.PUBLIC_URL + `/${coinId}/chart`}>
-								Chart
-							</Link>
+							<Link to={`/${coinId}/chart`}>Chart</Link>
 						</Tab>
 						<Tab isActive={priceMatch !== null}>
-							<Link to={process.env.PUBLIC_URL + `/${coinId}/price`}>
-								Price
-							</Link>
+							<Link to={`/${coinId}/price`}>Price</Link>
 						</Tab>
 					</Split>
 
 					<Switch>
-						<Route path={process.env.PUBLIC_URL + `/:coinId/price`}>
+						<Route path='/:coinId/price'>
 							<Price coinId={coinId} />
 						</Route>
-						<Route path={process.env.PUBLIC_URL + `/:coinId/chart`}>
+						<Route path='/:coinId/chart'>
 							<Chart coinId={coinId} />
 						</Route>
 					</Switch>
 				</>
 			)}
 			<BtnWrap>
-				<LinkHome
-					as='button'
+				<ActionButton
+					type='button'
 					onClick={() => {
 						history.goBack();
 					}}
 				>
 					이전
-				</LinkHome>
-				<LinkHome to={process.env.PUBLIC_URL + '/'}>목록보기</LinkHome>
+				</ActionButton>
+				<ActionLink to='/'>목록보기</ActionLink>
 			</BtnWrap>
 		</Container>
 	);
