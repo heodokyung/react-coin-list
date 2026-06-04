@@ -4,7 +4,7 @@ React와 TypeScript로 만든 암호화폐 시세 대시보드입니다. 코인 
 
 ## 바로가기
 
-- 배포 URL: https://heodokyung.github.io/react-coin-list/
+- URL: https://heodokyung.github.io/react-coin-list/
 
 ## 주요 기능
 
